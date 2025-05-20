@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Patient Keyword Report</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 2em; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { padding: 10px; border: 1px solid #ddd; }
+    th { background-color: #f2f2f2; }
+    mark { background-color: #ffe066; }
+    .button-link {
+      background-color: #007BFF;
+      color: white;
+      padding: 5px 10px;
+      text-decoration: none;
+      border-radius: 5px;
+    }
+    .button-link:hover { background-color: #0056b3; }
+  </style>
+</head>
+<body>
+
+  <h1>Patient Report</h1>
+  <p><strong>Date:</strong> 2025-05-17</p>
+  <p><strong>Patient ID:</strong> 12345</p>
+
+  <h2>Keyword Matches</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Keyword</th>
+        <th>Sentence</th>
+        <th>Page</th>
+        <th>Filename</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for match in matches %}
+      <tr>
+        <td>{{ match.keyword }}</td>
+        <td>{{ match.sentence|safe }}</td>
+        <td>{{ match.page }}</td>
+        <td>{{ match.filename }}</td>
+        <td><a class="button-link" href="viewer.html?file={{ match.filename }}#page={{ match.page }}" target="_blank">📄 View Page</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <p><em>Note: Click "View Page" to jump directly to the file and page where the keyword appears.</em></p>
+
+</body>
+</html>

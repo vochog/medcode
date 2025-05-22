@@ -1,0 +1,62 @@
+<?php
+$keyword = strtolower($_GET['keyword'] ?? 'example');
+$urls = file('pdf_urls.txt', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+$results = [];
+
+foreach ($urls as $url) {
+    $filename = basename(parse_url($url, PHP_URL_PATH));
+    $localPdf = __DIR__ . "/temp/$filename";
+    $txtPath = __DIR__ . "/temp/$filename.txt";
+
+    // Download PDF if needed
+    if (!file_exists($localPdf)) {
+        file_put_contents($localPdf, file_get_contents($url));
+    }
+
+    // Convert PDF to text
+    if (!file_exists($txtPath)) {
+        exec("pdftotext -layout \"$localPdf\" \"$txtPath\"");
+    }
+
+    // Read full text
+    $text = file_get_contents($txtPath);
+    $pages = explode("\f", $text); // Page breaks are form feed (\f)
+
+    foreach ($pages as $i => $page) {
+        if (stripos($page, $keyword) !== false) {
+            preg_match("/(.{0,100}$keyword.{0,100})/i", $page, $matches);
+            $snippet = htmlspecialchars($matches[1]);
+            $highlighted = preg_replace("/($keyword)/i", "<mark>$1</mark>", $snippet);
+            $results[] = [
+                'url' => $url,
+                'page' => $i + 1,
+                'snippet' => $highlighted,
+                'keyword' => $keyword
+            ];
+        }
+    }
+}
+?>
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>PDF Keyword Search</title>
+    <style> mark { background: yellow; } </style>
+</head>
+<body>
+    <h1>Search Results for "<?php echo htmlspecialchars($keyword); ?>"</h1>
+    <?php foreach ($results as $r): 
+        $pdfUrl = urlencode($r['url']);
+    ?>
+        <div style="margin-bottom: 20px; border-bottom: 1px solid #ccc; padding-bottom: 10px;">
+            <strong>PDF URL:</strong> <a href="<?= $r['url'] ?>" target="_blank"><?= $r['url'] ?></a><br>
+            <strong>Page:</strong> <?= $r['page'] ?><br>
+            <strong>Snippet:</strong><br> <?= $r['snippet'] ?><br>
+            <a href="viewer/viewer.html?file=<?= $pdfUrl ?>#page=<?= $r['page'] ?>&keyword=<?= urlencode($r['keyword']) ?>" target="_blank">
+                View PDF at Page
+            </a>
+        </div>
+    <?php endforeach; ?>
+</body>
+</html>
